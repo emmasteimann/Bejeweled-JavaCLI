@@ -161,11 +161,11 @@ class Board {
 
   public void printInstructions(){
     System.out.println("- Instructions:");
-    System.out.println("- For each gem greater than 3 in a chain");
-    System.out.println("- it becomes a multiplier. e.g. a 4 gem chain");
-    System.out.println("- means the score is multiplied by 2, 5 gems");
-    System.out.println("- score is multiplied by 3 and so on...");
+    System.out.println("- For each gem greater than 3 in a chain it becomes");
+    System.out.println("- a multiplier. e.g. a 4 gem chain means the score is multiplied");
+    System.out.println("- by 2, 5 gem chain means score is multiplied by 3 and so on...");
     System.out.println("- Type HELP at any point to see this again.");
+    System.out.println("- Type QUIT to exit.");
   }
 
   public void promptUser(){
@@ -178,14 +178,14 @@ class Board {
       System.out.println("Piece at " + selected_piece + " is " + this.boardGrid[piece_array[0]][piece_array[1]]);
       promptUser();
     }
-    checkForHelp(selected_piece);
+    checkForKeyWords(selected_piece);
     char[] input_array = selected_piece.toCharArray();
     if (!isValidEntry(input_array)){
       System.out.println("Is not a valid entry");
       promptUser();
     }
     String direction_input = console.readLine("In which direction to swap? (U,D,L,R) ");
-    checkForHelp(direction_input);
+    checkForKeyWords(direction_input);
     char[] direction_input_array = direction_input.toCharArray();
     int[] piece_array = getCoordinates(selected_piece);
     int[] swapping_piece = getSwappingPiece(direction_input, piece_array);
@@ -320,12 +320,15 @@ class Board {
     return directionalSequences;
   }
 
-  private void checkForHelp(String input){
+  private void checkForKeyWords(String input){
     if (input.contains("HELP") || input.contains("help")){
       clearScreen();
       displayBoard();
       printInstructions();
       promptUser();
+    }
+    if (input.contains("QUIT") || input.contains("quit")){
+      System.exit(0);
     }
   }
 
