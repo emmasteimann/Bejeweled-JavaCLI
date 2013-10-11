@@ -211,11 +211,14 @@ class Board {
     int[] piece_array = getCoordinates(selected_piece);
     int[] swapping_piece = getSwappingPiece(direction_input, piece_array);
     if (swapping_piece != null){
+      int previousScore = this.scoreBoard.getScore();
       Boolean did_swap = swapPieces(piece_array, swapping_piece);
       if (did_swap){
         clearScreen();
         displayBoard();
-        System.out.println("YAY! You've made a chain.");
+        int newScore = this.scoreBoard.getScore();
+        int turnScore = newScore - previousScore;
+        System.out.println("YAY! You've made a chain. " + turnScore + " points.");
       } else {
         System.out.println("No chain to be had. Swapping back.");
       }
