@@ -386,7 +386,7 @@ class Board {
       char direction = Character.toUpperCase(direction_input.charAt(0));
       int y = piece_array[0];
       int x = piece_array[1];
-      System.out.println("x is: " + x + " y: " + y);
+      // System.out.println("x is: " + x + " y: " + y);
       if (direction == 'U' && y > 0){
         int[] swapping_piece = {y-1, x};
         return swapping_piece;
