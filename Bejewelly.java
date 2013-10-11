@@ -119,7 +119,9 @@ class Board {
       return false;
     }
     locationSwap(piece_a, piece_b);
-    if (hasSequence(piece_b) || hasSequence(piece_a)){
+    if (hasSequence(piece_b)){
+      return true;
+    } else if (hasSequence(piece_a)){
       return true;
     } else {
       locationSwap(piece_a, piece_b);
