@@ -97,18 +97,6 @@ class Board {
     }
   }
 
-  private void addRandomPieceAtLocation(int i, int j){
-    Random randomPiece = new Random();
-    int gemInt = randomPiece.nextInt(BOARD_SIZE-1) + 1;
-    this.boardGrid[i][j] = Piece.values()[gemInt];
-    int[] newPieceArray = {i,j};
-    if (hasSequence(newPieceArray)){
-      addRandomPieceAtLocation(i,j);
-    } else {
-      return;
-    }
-  }
-
   public Piece gemAtLocation(String piece){
     int[] array_coords = getCoordinates(piece);
     int y = array_coords[0];
@@ -180,15 +168,6 @@ class Board {
     System.out.println("- Type HELP at any point to see this again.");
   }
 
-  private void checkForHelp(String input){
-    if (input.contains("HELP") || input.contains("help")){
-      clearScreen();
-      displayBoard();
-      printInstructions();
-      promptUser();
-    }
-  }
-
   public void promptUser(){
     Console console = System.console();
     String selected_piece = console.readLine("Which piece would you like to move? (e.g 1A) ");
@@ -226,6 +205,18 @@ class Board {
     } else {
       System.out.println("Is not a valid move");
       promptUser();
+    }
+  }
+
+  private void addRandomPieceAtLocation(int i, int j){
+    Random randomPiece = new Random();
+    int gemInt = randomPiece.nextInt(BOARD_SIZE-1) + 1;
+    this.boardGrid[i][j] = Piece.values()[gemInt];
+    int[] newPieceArray = {i,j};
+    if (hasSequence(newPieceArray)){
+      addRandomPieceAtLocation(i,j);
+    } else {
+      return;
     }
   }
 
@@ -327,6 +318,15 @@ class Board {
     // }
 
     return directionalSequences;
+  }
+
+  private void checkForHelp(String input){
+    if (input.contains("HELP") || input.contains("help")){
+      clearScreen();
+      displayBoard();
+      printInstructions();
+      promptUser();
+    }
   }
 
   private int[][] walkChain(int[] currentLocation, int[] vector){
