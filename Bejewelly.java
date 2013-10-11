@@ -12,7 +12,8 @@ enum Piece
 class BejeweledScore {
   private int current = 0;
   public void addToScore(int points){
-    this.current += points;
+    int multiplier = points - 2;
+    this.current += (points * multiplier);
   }
   public int getScore(){
     return this.current;
@@ -170,24 +171,50 @@ class Board {
     }
   }
 
+  public void printInstructions(){
+    System.out.println("- Instructions:");
+    System.out.println("- For each gem greater than 3 in a chain");
+    System.out.println("- it becomes a multiplier. e.g. a 4 gem chain");
+    System.out.println("- means the score is multiplied by 2, 5 gems");
+    System.out.println("- score is multiplied by 3 and so on...");
+    System.out.println("- Type HELP at any point to see this again.");
+  }
+
+  private void checkForHelp(String input){
+    if (input.contains("HELP") || input.contains("help")){
+      clearScreen();
+      displayBoard();
+      printInstructions();
+      promptUser();
+    }
+  }
+
   public void promptUser(){
     Console console = System.console();
     String selected_piece = console.readLine("Which piece would you like to move? (e.g 1A) ");
     // String[] input_array = input.split("\\|",-1); 
+    if (selected_piece.contains("*")){
+      selected_piece = selected_piece.replace("*", "");
+      int[] piece_array = getCoordinates(selected_piece);
+      System.out.println("Piece at " + selected_piece + " is " + this.boardGrid[piece_array[0]][piece_array[1]]);
+      promptUser();
+    }
+    checkForHelp(selected_piece);
     char[] input_array = selected_piece.toCharArray();
     if (!isValidEntry(input_array)){
       System.out.println("Is not a valid entry");
       promptUser();
     }
     String direction_input = console.readLine("In which direction to swap? (U,D,L,R) ");
+    checkForHelp(direction_input);
     char[] direction_input_array = direction_input.toCharArray();
     int[] piece_array = getCoordinates(selected_piece);
     int[] swapping_piece = getSwappingPiece(direction_input, piece_array);
     if (swapping_piece != null){
       Boolean did_swap = swapPieces(piece_array, swapping_piece);
-      clearScreen();
-      displayBoard();
       if (did_swap){
+        clearScreen();
+        displayBoard();
         System.out.println("YAY! You've made a chain.");
       } else {
         System.out.println("No chain to be had. Swapping back.");
@@ -211,6 +238,10 @@ class Board {
   private Boolean clearSequences(int[] piece_a, int[] piece_b){
     HashMap<String, int[][]> pc_a_sqs = getSequences(piece_a);
     HashMap<String, int[][]> pc_b_sqs = getSequences(piece_b);
+    // System.out.println("Seq A Row " + Arrays.deepToString(pc_a_sqs.get("row")));
+    // System.out.println("Seq A Col " + Arrays.deepToString(pc_a_sqs.get("col")));
+    // System.out.println("Seq B Row " + Arrays.deepToString(pc_b_sqs.get("row")));
+    // System.out.println("Seq B Col " + Arrays.deepToString(pc_b_sqs.get("col")));
     if (pc_a_sqs.get("row").length > 2 ){
       for(int[] pieceAt : pc_a_sqs.get("row")){
         removePiece(pieceAt);
@@ -282,15 +313,15 @@ class Board {
 
     directionalSequences.put("col", currentColSequence);
 
-    if (currentRowSequence.length > 2){
-      System.out.println("Has row sequence of: ");
-      System.out.println(Arrays.deepToString(currentRowSequence));
-    }
+    // if (currentRowSequence.length > 2){
+    //   System.out.println("Has row sequence of: ");
+    //   System.out.println(Arrays.deepToString(currentRowSequence));
+    // }
 
-    if (currentColSequence.length > 2){
-      System.out.println("Has column sequence of: ");
-      System.out.println(Arrays.deepToString(currentColSequence));
-    }
+    // if (currentColSequence.length > 2){
+    //   System.out.println("Has column sequence of: ");
+    //   System.out.println(Arrays.deepToString(currentColSequence));
+    // }
 
     return directionalSequences;
   }
@@ -303,18 +334,24 @@ class Board {
   private int[][] walkChain(int[] currentLocation, int[] vector, ArrayList<int[]> completedSequence){
     Piece firstPiece = this.boardGrid[currentLocation[0]][currentLocation[1]];
     int[] nextLocation = BejewellyUtils.addPostions(currentLocation, vector);
-    Piece nextPiece = Piece.values()[0];
+    // System.out.println(Arrays.toString(currentLocation) + " + " + Arrays.toString(vector) + " = " + Arrays.toString(nextLocation));
     if (isWithinBounds(nextLocation)){
-      nextPiece = this.boardGrid[nextLocation[0]][nextLocation[1]];
-    }
-    if (firstPiece == nextPiece){
-      completedSequence.add(nextLocation);
-      return walkChain(nextLocation, vector, completedSequence);
+      Piece nextPiece = this.boardGrid[nextLocation[0]][nextLocation[1]];
+      // System.out.println("Is within bounds...");
+      // System.out.println(firstPiece + " vs " + nextPiece);
+      if (firstPiece == nextPiece){
+        completedSequence.add(nextLocation);
+        // System.out.println("Are equal, recursing...");
+        return walkChain(nextLocation, vector, completedSequence);
+      } else{
+        // System.out.println("Are not equal...");
+      }
     } else {
-      int[][] sequence = new int[completedSequence.size()][];
-      sequence = completedSequence.toArray(sequence);
-      return sequence;
+      // System.out.println("Is out of bounds...");
     }
+    int[][] sequence = new int[completedSequence.size()][];
+    sequence = completedSequence.toArray(sequence);
+    return sequence;
   }
 
   private Boolean isValidEntry(char[] input_array){
@@ -337,7 +374,7 @@ class Board {
   private Boolean isWithinBounds(int[] piece_array){
     int y = piece_array[0];
     int x = piece_array[1];
-    if (y >= 0 && y < BOARD_SIZE-1 && x >= 0 && x < BOARD_SIZE-1){
+    if (y >= 0 && y <= BOARD_SIZE-1 && x >= 0 && x <= BOARD_SIZE-1){
       return true;
     } else {
       return false;
@@ -345,22 +382,24 @@ class Board {
   }
 
   private int[] getSwappingPiece(String direction_input, int[] piece_array){
-    char direction = Character.toUpperCase(direction_input.charAt(0));
-    int y = piece_array[0];
-    int x = piece_array[1];
-    System.out.println("x is: " + x + " y: " + y);
-    if (direction == 'U' && y > 0){
-      int[] swapping_piece = {y-1, x};
-      return swapping_piece;
-    } else if (direction == 'D' && y < BOARD_SIZE-1) {
-      int[] swapping_piece = {y+1, x};
-      return swapping_piece;
-    } else if (direction == 'L' && x > 0) {
-      int[] swapping_piece = {y, x-1};
-      return swapping_piece;
-    } else if (direction == 'R' && x < BOARD_SIZE-1) {
-      int[] swapping_piece = {y, x+1};
-      return swapping_piece;
+    if (direction_input.matches("[a-zA-Z]")){
+      char direction = Character.toUpperCase(direction_input.charAt(0));
+      int y = piece_array[0];
+      int x = piece_array[1];
+      System.out.println("x is: " + x + " y: " + y);
+      if (direction == 'U' && y > 0){
+        int[] swapping_piece = {y-1, x};
+        return swapping_piece;
+      } else if (direction == 'D' && y < BOARD_SIZE-1) {
+        int[] swapping_piece = {y+1, x};
+        return swapping_piece;
+      } else if (direction == 'L' && x > 0) {
+        int[] swapping_piece = {y, x-1};
+        return swapping_piece;
+      } else if (direction == 'R' && x < BOARD_SIZE-1) {
+        int[] swapping_piece = {y, x+1};
+        return swapping_piece;
+      }
     }
     return null;
   }
@@ -380,6 +419,7 @@ public class Bejewelly {
     Board gameBoard = new Board();
     gameBoard.clearScreen();
     gameBoard.displayBoard();
+    gameBoard.printInstructions();
     gameBoard.promptUser();
   }
 }
