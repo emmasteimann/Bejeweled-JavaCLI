@@ -121,13 +121,12 @@ class Board {
     locationSwap(piece_a, piece_b);
     if (hasSequence(piece_b)){
       return true;
-    } else if (hasSequence(piece_a)){
+    } 
+    if (hasSequence(piece_a)){
       return true;
-    } else {
-      locationSwap(piece_a, piece_b);
-      return false;
     }
-    
+    locationSwap(piece_b, piece_a);
+    return false;
   }  
 
   public void locationSwap(int[] piece_a, int[] piece_b){
@@ -218,7 +217,7 @@ class Board {
     int[][] forwardColDirection = walkChain(currentLocation, walkColumn[1]);
     int[][] currentColSequence = BejewellyUtils.concatAll(backwardColDirection, currentSequence, forwardColDirection);
 
-    directionalSequences.put("col", currentRowSequence);
+    directionalSequences.put("col", currentColSequence);
 
     if (currentRowSequence.length > 2){
       System.out.println("Has row sequence of: ");
