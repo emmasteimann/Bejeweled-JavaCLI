@@ -9,6 +9,15 @@ enum Piece
     this.value = value;
   }
 }
+class BejeweledScore {
+  private int current = 0;
+  public void addToScore(int points){
+    this.current += points;
+  }
+  public int getScore(){
+    return this.current;
+  }
+}
 
 class BejewellyUtils {
 
@@ -73,11 +82,13 @@ class BejewellyUtils {
 
 class Board {
   public Piece[][] boardGrid;
+  public BejeweledScore scoreBoard;
   private int BOARD_SIZE = 8;
   private int[][] walkRow = {{1,0},{-1,0}};
   private int[][] walkColumn = {{0,1},{0,-1}};
   public Board(){
     this.boardGrid = new Piece[BOARD_SIZE][BOARD_SIZE];
+    this.scoreBoard = new BejeweledScore();
     for (int i = 0; i < BOARD_SIZE; i++) {
       for (int j = 0; j < BOARD_SIZE; j++) {
         addRandomPieceAtLocation(i,j);
@@ -119,10 +130,7 @@ class Board {
       return false;
     }
     locationSwap(piece_a, piece_b);
-    if (hasSequence(piece_b)){
-      return true;
-    } 
-    if (hasSequence(piece_a)){
+    if (clearSequences(piece_b, piece_a)){
       return true;
     }
     locationSwap(piece_b, piece_a);
@@ -141,6 +149,7 @@ class Board {
 
   public void displayBoard(){
     System.out.println("      You're playing Bejwelly...");
+    System.out.println("      Current Score: " + this.scoreBoard.getScore());
     StringBuilder topRow = new StringBuilder();
     topRow.append("  ");
     for (int i = 0; i < BOARD_SIZE; i++) {
@@ -193,13 +202,67 @@ class Board {
   private Boolean hasSequence(int[] currentLocation){
     HashMap<String, int[][]> resultHash = getSequences(currentLocation);
     if (resultHash.get("row").length > 2 || resultHash.get("col").length > 2){
-      System.out.println("row ");
-      System.out.println(Arrays.deepToString(resultHash.get("row")));
-      System.out.println("col ");
-      System.out.println(Arrays.deepToString(resultHash.get("col")));
       return true;
     } else {
       return false;
+    }
+  }
+
+  private Boolean clearSequences(int[] piece_a, int[] piece_b){
+    HashMap<String, int[][]> pc_a_sqs = getSequences(piece_a);
+    HashMap<String, int[][]> pc_b_sqs = getSequences(piece_b);
+    if (pc_a_sqs.get("row").length > 2 ){
+      for(int[] pieceAt : pc_a_sqs.get("row")){
+        removePiece(pieceAt);
+      }
+      this.scoreBoard.addToScore(pc_a_sqs.get("row").length);
+    }    
+    if (pc_a_sqs.get("col").length > 2 ){
+      for(int[] pieceAt : pc_a_sqs.get("col")){
+        removePiece(pieceAt);
+      }
+      this.scoreBoard.addToScore(pc_a_sqs.get("col").length);
+    }    
+    if (pc_b_sqs.get("row").length > 2 ){
+      for(int[] pieceAt : pc_b_sqs.get("row")){
+        removePiece(pieceAt);
+      }
+      this.scoreBoard.addToScore(pc_b_sqs.get("row").length);
+    }    
+    if (pc_b_sqs.get("col").length > 2 ){
+      for(int[] pieceAt : pc_b_sqs.get("col")){
+        removePiece(pieceAt);
+      }
+      this.scoreBoard.addToScore(pc_b_sqs.get("col").length);
+    }
+    if (pc_a_sqs.get("row").length > 2 || pc_a_sqs.get("col").length > 2){
+      return true;
+    } else if (pc_b_sqs.get("row").length > 2 || pc_b_sqs.get("col").length > 2) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  private void removePiece(int[] pieceAt)
+  {
+    this.boardGrid[pieceAt[0]][pieceAt[1]] = Piece.BLANK;
+    fillInGap(pieceAt);
+  }
+  
+  private void fillInGap(int[] pieceAt)
+  {
+    if(pieceAt[0] == 0)
+    {
+      addRandomPieceAtLocation(pieceAt[0],pieceAt[1]);
+    }
+    else
+    {
+      int[] coordinatesAbove = {pieceAt[0]-1, pieceAt[1]};
+      Piece pieceAbove = this.boardGrid[coordinatesAbove[0]][coordinatesAbove[1]];
+      this.boardGrid[coordinatesAbove[0]][coordinatesAbove[1]] = Piece.BLANK;
+      this.boardGrid[pieceAt[0]][pieceAt[1]] = pieceAbove;
+      removePiece(coordinatesAbove);
     }
   }
 
