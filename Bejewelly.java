@@ -229,40 +229,33 @@ class Board {
     }
   }
 
+  private Boolean checkAndClear(HashMap<String, int[][]> sequence){
+    String[] keys = {"row","col"};
+    Boolean hasSufficientLength = false;
+    for (String key : keys){
+      if (sequence.get(key).length > 2 ){
+        for(int[] pieceAt : sequence.get(key)){
+          removePiece(pieceAt);
+        }
+        this.scoreBoard.addToScore(sequence.get(key).length);
+        if (!hasSufficientLength){
+          hasSufficientLength = true;
+        }
+      }
+    }
+    if (hasSufficientLength){
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   private Boolean clearSequences(int[] piece_a, int[] piece_b){
     HashMap<String, int[][]> pc_a_sqs = getSequences(piece_a);
     HashMap<String, int[][]> pc_b_sqs = getSequences(piece_b);
-    // System.out.println("Seq A Row " + Arrays.deepToString(pc_a_sqs.get("row")));
-    // System.out.println("Seq A Col " + Arrays.deepToString(pc_a_sqs.get("col")));
-    // System.out.println("Seq B Row " + Arrays.deepToString(pc_b_sqs.get("row")));
-    // System.out.println("Seq B Col " + Arrays.deepToString(pc_b_sqs.get("col")));
-    if (pc_a_sqs.get("row").length > 2 ){
-      for(int[] pieceAt : pc_a_sqs.get("row")){
-        removePiece(pieceAt);
-      }
-      this.scoreBoard.addToScore(pc_a_sqs.get("row").length);
-    }    
-    if (pc_a_sqs.get("col").length > 2 ){
-      for(int[] pieceAt : pc_a_sqs.get("col")){
-        removePiece(pieceAt);
-      }
-      this.scoreBoard.addToScore(pc_a_sqs.get("col").length);
-    }    
-    if (pc_b_sqs.get("row").length > 2 ){
-      for(int[] pieceAt : pc_b_sqs.get("row")){
-        removePiece(pieceAt);
-      }
-      this.scoreBoard.addToScore(pc_b_sqs.get("row").length);
-    }    
-    if (pc_b_sqs.get("col").length > 2 ){
-      for(int[] pieceAt : pc_b_sqs.get("col")){
-        removePiece(pieceAt);
-      }
-      this.scoreBoard.addToScore(pc_b_sqs.get("col").length);
-    }
-    if (pc_a_sqs.get("row").length > 2 || pc_a_sqs.get("col").length > 2){
-      return true;
-    } else if (pc_b_sqs.get("row").length > 2 || pc_b_sqs.get("col").length > 2) {
+    Boolean a_sequences = checkAndClear(pc_a_sqs);
+    Boolean b_sequences = checkAndClear(pc_b_sqs);
+    if (a_sequences || b_sequences){
       return true;
     } else {
       return false;
