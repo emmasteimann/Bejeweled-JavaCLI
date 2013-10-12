@@ -18,6 +18,9 @@ class BejeweledScore {
   public int getScore(){
     return this.current;
   }
+  public void resetScore(){
+    this.current = 0;
+  }
 }
 
 class BejewellyUtils {
@@ -90,11 +93,7 @@ class Board {
   public Board(){
     this.boardGrid = new Piece[BOARD_SIZE][BOARD_SIZE];
     this.scoreBoard = new BejeweledScore();
-    for (int i = 0; i < BOARD_SIZE; i++) {
-      for (int j = 0; j < BOARD_SIZE; j++) {
-        addRandomPieceAtLocation(i,j);
-      }
-    }
+    loadNewBoard();
   }
 
   public Piece gemAtLocation(String piece){
@@ -124,6 +123,23 @@ class Board {
     }
     locationSwap(piece_b, piece_a);
     return false;
+  }
+
+  public int[] temporarilySwapAndCheckPieces(int[] piece_a, int[] piece_b){
+    if (piece_a == piece_b) {
+      return null;
+    }
+    locationSwap(piece_a, piece_b);
+    if (hasSequence(piece_b)){
+      locationSwap(piece_b, piece_a);
+      return piece_b;
+    }
+    if (hasSequence(piece_a)){
+      locationSwap(piece_b, piece_a);
+      return piece_a;
+    }
+    locationSwap(piece_b, piece_a);
+    return null;
   }  
 
   public void locationSwap(int[] piece_a, int[] piece_b){
@@ -165,27 +181,29 @@ class Board {
     System.out.println("- a multiplier. e.g. a 4 gem chain means the score is multiplied");
     System.out.println("- by 2, 5 gem chain means score is multiplied by 3 and so on...");
     System.out.println("- Type HELP at any point to see this again.");
+    System.out.println("- Type RELOAD at any point to start over.");
+    System.out.println("- Type CHECK to see if there are still available moves.");
+    System.out.println("- Type HINT to see an available move");
     System.out.println("- Type QUIT to exit.");
   }
 
   public void promptUser(){
     Console console = System.console();
     String selected_piece = console.readLine("Which piece would you like to move? (e.g 1A) ");
-    // String[] input_array = input.split("\\|",-1); 
     if (selected_piece.contains("*")){
       selected_piece = selected_piece.replace("*", "");
       int[] piece_array = getCoordinates(selected_piece);
       System.out.println("Piece at " + selected_piece + " is " + this.boardGrid[piece_array[0]][piece_array[1]]);
       promptUser();
     }
-    checkForKeyWords(selected_piece);
+    Boolean hadKeywords = checkForKeyWords(selected_piece);
     char[] input_array = selected_piece.toCharArray();
-    if (!isValidEntry(input_array)){
+    if (!isValidEntry(input_array) && !hadKeywords){
       System.out.println("Is not a valid entry");
       promptUser();
     }
     String direction_input = console.readLine("In which direction to swap? (U,D,L,R) ");
-    checkForKeyWords(direction_input);
+    Boolean hadDirectionKeywords = checkForKeyWords(direction_input);
     char[] direction_input_array = direction_input.toCharArray();
     int[] piece_array = getCoordinates(selected_piece);
     int[] swapping_piece = getSwappingPiece(direction_input, piece_array);
@@ -205,6 +223,14 @@ class Board {
     } else {
       System.out.println("Is not a valid move");
       promptUser();
+    }
+  }
+
+  private void loadNewBoard(){
+    for (int i = 0; i < BOARD_SIZE; i++) {
+      for (int j = 0; j < BOARD_SIZE; j++) {
+        addRandomPieceAtLocation(i,j);
+      }
     }
   }
 
@@ -241,12 +267,20 @@ class Board {
         if (!hasSufficientLength){
           hasSufficientLength = true;
         }
+        checkSequenceAfterRemoval(sequence.get(key));
       }
     }
     if (hasSufficientLength){
       return true;
     } else {
       return false;
+    }
+  }
+
+  private void checkSequenceAfterRemoval(int[][] sequence){
+    for (int[] location : sequence){
+      HashMap<String, int[][]> current_sequence = getSequences(location);
+      Boolean requiredClearing = checkAndClear(current_sequence);
     }
   }
 
@@ -300,29 +334,67 @@ class Board {
 
     directionalSequences.put("col", currentColSequence);
 
-    // if (currentRowSequence.length > 2){
-    //   System.out.println("Has row sequence of: ");
-    //   System.out.println(Arrays.deepToString(currentRowSequence));
-    // }
-
-    // if (currentColSequence.length > 2){
-    //   System.out.println("Has column sequence of: ");
-    //   System.out.println(Arrays.deepToString(currentColSequence));
-    // }
-
     return directionalSequences;
   }
 
-  private void checkForKeyWords(String input){
+  private int[] areMovesStillAvailable(){
+    String[] directions = {"U","D","L","R"};
+    for (int i = 0; i < BOARD_SIZE; i++) {
+      for (int j = 0; j < BOARD_SIZE; j++) {
+        int[] currentLocation = {i,j};
+        for (String direction : directions){
+          int[] neighborPiece = getSwappingPiece(direction, currentLocation);
+          if (neighborPiece != null){
+            int[] pieceCanSequence = temporarilySwapAndCheckPieces(neighborPiece, currentLocation);
+            if (pieceCanSequence != null && pieceCanSequence.length > 0){
+              return currentLocation;
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private Boolean checkForKeyWords(String input){
     if (input.contains("HELP") || input.contains("help")){
       clearScreen();
       displayBoard();
       printInstructions();
       promptUser();
+      return true;
+    }
+    if (input.contains("RELOAD") || input.contains("reload")){
+      this.scoreBoard.resetScore();
+      loadNewBoard();
+      clearScreen();
+      displayBoard();
+      promptUser();
+      return true;
+    }
+    if (input.contains("CHECK") || input.contains("check")){
+      int[] checkArray = areMovesStillAvailable();
+      if (checkArray != null && checkArray.length > 0){
+        System.out.println("There are indeed still moves available.");
+      } else {
+        System.out.println("There are no more moves available. Feel free to RELOAD.");
+      }
+      return true;
+    }
+    if (input.contains("HINT") || input.contains("hint")){
+      int[] checkArray = areMovesStillAvailable();
+      if (checkArray != null && checkArray.length > 0){
+        System.out.println("A sequence can be made if " + (checkArray[1]+1) + getCharForNumber(checkArray[0]+1) + " is swapped");
+      } else {
+        System.out.println("There are no more moves available. Feel free to RELOAD.");
+      }
+      return true;
     }
     if (input.contains("QUIT") || input.contains("quit")){
       System.exit(0);
+      return true;
     }
+    return false;
   }
 
   private int[][] walkChain(int[] currentLocation, int[] vector){
@@ -333,20 +405,12 @@ class Board {
   private int[][] walkChain(int[] currentLocation, int[] vector, ArrayList<int[]> completedSequence){
     Piece firstPiece = this.boardGrid[currentLocation[0]][currentLocation[1]];
     int[] nextLocation = BejewellyUtils.addPostions(currentLocation, vector);
-    // System.out.println(Arrays.toString(currentLocation) + " + " + Arrays.toString(vector) + " = " + Arrays.toString(nextLocation));
     if (isWithinBounds(nextLocation)){
       Piece nextPiece = this.boardGrid[nextLocation[0]][nextLocation[1]];
-      // System.out.println("Is within bounds...");
-      // System.out.println(firstPiece + " vs " + nextPiece);
       if (firstPiece == nextPiece){
         completedSequence.add(nextLocation);
-        // System.out.println("Are equal, recursing...");
         return walkChain(nextLocation, vector, completedSequence);
-      } else{
-        // System.out.println("Are not equal...");
       }
-    } else {
-      // System.out.println("Is out of bounds...");
     }
     int[][] sequence = new int[completedSequence.size()][];
     sequence = completedSequence.toArray(sequence);
@@ -354,10 +418,14 @@ class Board {
   }
 
   private Boolean isValidEntry(char[] input_array){
-    String firstPosition = Character.toString(input_array[0]);
-    String secondPosition = Character.toString(input_array[1]);
-    if (firstPosition.matches("[1-"+BOARD_SIZE+"]") && secondPosition.matches("[a-hA-H]")){
-      return true;
+    if (input_array.length > 1){
+      String firstPosition = Character.toString(input_array[0]);
+      String secondPosition = Character.toString(input_array[1]);
+      if (firstPosition.matches("[1-"+BOARD_SIZE+"]") && secondPosition.matches("[a-hA-H]")){
+        return true;
+      } else {
+        return false;
+      }
     } else {
       return false;
     }
