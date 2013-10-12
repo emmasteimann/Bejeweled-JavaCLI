@@ -204,6 +204,9 @@ class Board {
     }
     String direction_input = console.readLine("In which direction to swap? (U,D,L,R) ");
     Boolean hadDirectionKeywords = checkForKeyWords(direction_input);
+    if (hadDirectionKeywords){
+      promptUser();
+    }
     char[] direction_input_array = direction_input.toCharArray();
     int[] piece_array = getCoordinates(selected_piece);
     int[] swapping_piece = getSwappingPiece(direction_input, piece_array);
